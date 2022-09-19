@@ -1,0 +1,4 @@
+com:
+  username: YMLsuperusername-qa
+  password: YMLdbPassword-qa
+  jdbcurl: YMLsomeUrl-qa

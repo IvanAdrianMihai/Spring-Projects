@@ -1,0 +1,19 @@
+spring:
+  profiles:
+    active: dog,EN
+
+com:
+  username: YMLsuperusername
+  password: YMLdbPassword
+  jdbcurl: YMLsomeUrl
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        prod
+com:
+  username: YMLsuperusername-prod
+  password: YMLdbPassword-prod
+  jdbcurl: YMLsomeUrl-prod

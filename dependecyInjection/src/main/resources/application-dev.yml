@@ -1,0 +1,4 @@
+com:
+  username: YMLsuperusername-dev
+  password: YMLdbPassword-dev
+  jdbcurl: YMLsomeUrl-dev

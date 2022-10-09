@@ -1,0 +1,1 @@
+INSERT INTO unit_of_measure (id, description) VALUES (99, 'description')

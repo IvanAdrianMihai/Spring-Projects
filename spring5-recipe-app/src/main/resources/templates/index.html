@@ -5,41 +5,49 @@
     <title>Recipe Home</title>
     <!-- CSS only -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous" 0
+          th:href="@{/webjars/bootstrap/5.2.2/css/bootstrap.min.css}">
+
+    <script src="/webjars/jquery/3.6.1/jquery.min.js"></script>
+
     <!-- JavaScript Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
-            crossorigin="anonymous"></script>
+            crossorigin="anonymous" th:href="@{/webjars/bootstrap/5.2.2/css/bootstrap.min.css}"></script>
 </head>
 <body>
 
 <div class="container-fluid" style="margin-top: 20px">
     <div class="row">
-        <div class="col-md-6 col-md-offset-3">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h1 class="panel-title">My Recipes!</h1>
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header" style="background-color: lightskyblue">
+                    <h3>My Recipes</h3>
                 </div>
-                <div class="panel-body">
+                <div class="card-body" style="padding-bottom: 0px">
                     <div class="table-responsive" th:if="${not#lists.isEmpty(recipes)}">
-                        <table class="table table-hover">
+                        <table class="table table-hover" style="margin-bottom: 0px">
                             <thead class="thead-inverse">
                             <tr>
                                 <th>ID</th>
                                 <th>Description</th>
+                                <th>View</th>
                             </tr>
                             </thead>
                             <tr th:remove="all">
-                                <td th:text="${recipe.id}">123</td>
-                                <td th:text="${recipe.description}">Tasty Food 1</td>
+                                <td>123</td>
+                                <td>Tasty Food 1</td>
+                                <td><a href="#">View</a></td>
                             </tr>
                             <tr th:remove="all">
-                                <td th:text="${recipe.id}">123</td>
-                                <td th:text="${recipe.description}">Tasty Food 2</td>
+                                <td>1231</td>
+                                <td>Tasty Food 2</td>
+                                <td><a href="#">View</a></td>
                             </tr>
                             <tr th:each="recipe : ${recipes}">
                                 <td th:text="${recipe.id}">123</td>
                                 <td th:text="${recipe.description}">Tasty Food 3</td>
+                                <td><a href="#" th:href="@{'/recipe/show/' + ${recipe.id}}">View</a></td>
                             </tr>
                         </table>
                     </div>

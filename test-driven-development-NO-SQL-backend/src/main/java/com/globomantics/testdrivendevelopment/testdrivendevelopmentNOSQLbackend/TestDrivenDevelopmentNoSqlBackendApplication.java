@@ -1,0 +1,13 @@
+package com.globomantics.testdrivendevelopment.testdrivendevelopmentNOSQLbackend;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class TestDrivenDevelopmentNoSqlBackendApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(TestDrivenDevelopmentNoSqlBackendApplication.class, args);
+	}
+
+}

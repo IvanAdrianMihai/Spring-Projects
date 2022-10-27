@@ -1,8 +1,10 @@
-package com.globomantics.testdrivendevelopment.testdrivendevelopmentSQLbackend.controller;
+package com.globomantics.testdrivendevelopment.testdrivendevelopmentSQLbackend.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.database.rider.core.api.connection.ConnectionHolder;
+import com.github.database.rider.core.api.dataset.DataSet;
+import com.github.database.rider.junit5.DBUnitExtension;
 import com.globomantics.testdrivendevelopment.testdrivendevelopmentSQLbackend.model.Product;
-import com.globomantics.testdrivendevelopment.testdrivendevelopmentSQLbackend.service.ProductService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,36 +12,37 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Optional;
+import javax.sql.DataSource;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith({DBUnitExtension.class, SpringExtension.class})
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
-class ProductControllerTest {
-    @MockBean
-    private ProductService productService;
-
+class ProductServiceIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private DataSource dataSource;
+
+    public ConnectionHolder getConnectionHolder() {
+        //return a function that retrieves a connection from our data source
+        return () -> dataSource.getConnection();
+    }
+
     @Test
     @DisplayName("GET /product/1 - Found")
+    @DataSet("products.yml")
     void testGetProductByIdFound() throws Exception {
-        //set up our mocked service
-        Product mockProduct = new Product(1L, "Product Name", 10, 1);
-        doReturn(Optional.of(mockProduct)).when(productService).findById(1L);
-
         //execute get request
         mockMvc.perform(MockMvcRequestBuilders.get("/product/{id}", 1))
                 //validate the response code and content type
@@ -52,30 +55,27 @@ class ProductControllerTest {
 
                 //validate the returned fields
                 .andExpect(jsonPath("$.id", Matchers.is(1)))
-                .andExpect(jsonPath("$.name", Matchers.is("Product Name")))
+                .andExpect(jsonPath("$.name", Matchers.is("Product 1")))
                 .andExpect(jsonPath("$.quantity", Matchers.is(10)))
                 .andExpect(jsonPath("$.version", Matchers.is(1)));
     }
 
     @Test
-    @DisplayName("GET /product/1 - Not Found")
+    @DisplayName("GET /product/3 - Not Found")
+    @DataSet("products.yml")
     void testGetProductByIdNotFound() throws Exception {
-        //set up mocked service
-        doReturn(Optional.empty()).when(productService).findById(1L);
-
         //execute the get request
-        mockMvc.perform(MockMvcRequestBuilders.get("/product/{id}", 1))
+        mockMvc.perform(MockMvcRequestBuilders.get("/product/{id}", 3))
                 //validate that we get a 404 Not Found response
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("POST /product - Success")
+    @DataSet("products-empty.yml")
     void testCreateProduct() throws Exception {
-        //set up mocked service
+        //set up created Product service
         Product postProduct = new Product("Product Name", 10);
-        Product mockProduct = new Product(1L, "Product Name", 10, 1);
-        doReturn(mockProduct).when(productService).save(any());
 
         mockMvc.perform(MockMvcRequestBuilders.post("/product")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,17 +97,15 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /product/1 - Success")
+    @DisplayName("PUT /product/2 - Success")
+    @DataSet("products.yml")
     void testUpdateProductSuccess() throws Exception {
-        //set up mocked service
-        Product putProduct = new Product("Product Name", 10);
-        Product mockProduct = new Product(1L, "Product Name", 10, 1);
-        doReturn(Optional.of(mockProduct)).when(productService).findById(1L);
-        doReturn(true).when(productService).update(any());
+        //set up created Product service
+        Product putProduct = new Product("Product 2 Update", 10);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/product/{id}", 1)
+        mockMvc.perform(MockMvcRequestBuilders.put("/product/{id}", 2)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.IF_MATCH, 1)
+                        .header(HttpHeaders.IF_MATCH, 2)
                         .content(asJsonString(putProduct)))
 
                 //validate the response code and content type
@@ -115,28 +113,26 @@ class ProductControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
 
                 //validate the headers
-                .andExpect(header().string(HttpHeaders.ETAG, "\"2\""))
-                .andExpect(header().string(HttpHeaders.LOCATION, "/product/1"))
+                .andExpect(header().string(HttpHeaders.ETAG, "\"3\""))
+                .andExpect(header().string(HttpHeaders.LOCATION, "/product/2"))
 
                 //validate the returned fields
-                .andExpect(jsonPath("$.id", Matchers.is(1)))
-                .andExpect(jsonPath("$.name", Matchers.is("Product Name")))
+                .andExpect(jsonPath("$.id", Matchers.is(2)))
+                .andExpect(jsonPath("$.name", Matchers.is("Product 2 Update")))
                 .andExpect(jsonPath("$.quantity", Matchers.is(10)))
-                .andExpect(jsonPath("$.version", Matchers.is(2)));
+                .andExpect(jsonPath("$.version", Matchers.is(3)));
     }
 
     @Test
     @DisplayName("PUT /product/1 - Version Mismatch")
+    @DataSet("products.yml")
     void testUpdateProductVersionMismatch() throws Exception {
-        //set up mocked service
+        //set up updateProduct service
         Product putProduct = new Product("Product Name", 10);
-        Product mockProduct = new Product(1L, "Product Name", 10, 2);
-        doReturn(Optional.of(mockProduct)).when(productService).findById(1L);
-        doReturn(true).when(productService).update(any());
 
         mockMvc.perform(MockMvcRequestBuilders.put("/product/{id}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.IF_MATCH, 1)
+                        .header(HttpHeaders.IF_MATCH, 7)
                         .content(asJsonString(putProduct)))
 
                 //validate the response code and content type
@@ -144,13 +140,13 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /product/1 - Not Found")
+    @DisplayName("PUT /product/3 - Not Found")
+    @DataSet("products.yml")
     void testUpdateProductNotFound() throws Exception {
-        //set up mocked service
+        //set up updateProduct service
         Product putProduct = new Product("Product Name", 10);
-        doReturn(Optional.empty()).when(productService).findById(1L);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/product/{id}", 1)
+        mockMvc.perform(MockMvcRequestBuilders.put("/product/{id}", 3)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.IF_MATCH, 1)
                         .content(asJsonString(putProduct)))
@@ -161,43 +157,20 @@ class ProductControllerTest {
 
     @Test
     @DisplayName("DELETE /product/1 - Success")
+    @DataSet("products.yml")
     void testDeleteProductSuccess() throws Exception {
-        //set up mock product
-        Product mockProduct = new Product(1L, "Product Name", 10, 1);
-
-        //set up mocked service
-        doReturn(Optional.of(mockProduct)).when(productService).findById(1L);
-        doReturn(true).when(productService).delete(1L);
-
         //execute delete request
         mockMvc.perform(MockMvcRequestBuilders.delete("/product/{id}", 1))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("DELETE /product/1 - Not Found")
+    @DisplayName("DELETE /product/3 - Not Found")
+    @DataSet("products.yml")
     void testDeleteProductNotFound() throws Exception {
-        //set up mocked service
-        doReturn(Optional.empty()).when(productService).findById(1L);
-
         //execute delete request
-        mockMvc.perform(MockMvcRequestBuilders.delete("/product/{id}", 1))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/product/{id}", 3))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("DELETE /product/1 - Failure")
-    void testDeleteProductFailure() throws Exception {
-        //set up mock product
-        Product mockProduct = new Product(1L, "Product Name", 10, 1);
-
-        //set up mocked service
-        doReturn(Optional.of(mockProduct)).when(productService).findById(1L);
-        doReturn(false).when(productService).delete(1L);
-
-        //execute delete request
-        mockMvc.perform(MockMvcRequestBuilders.delete("/product/{id}", 1))
-                .andExpect(status().isInternalServerError());
     }
 
     static String asJsonString(final Object obj) {

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1",
+    "productId": 1,
+    "version": 1,
+    "entries": [
+      {
+        "username": "user1",
+        "date": "2018-11-10T11:38:26.855+0000",
+        "review": "This is a review"
+      }
+    ]
+  }
+]
